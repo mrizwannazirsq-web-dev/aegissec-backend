@@ -1,68 +1,57 @@
-// --- AEGISSEC CENTRAL BRAIN (Node.js Backend for Vercel) ---
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Temporary Database (Baad mein hum ise Supabase se jodeinge)
+// --- SUPABASE DATABASE CONNECTION ---
+// YAHAN APNI SUPABASE URL AUR KEY DAALEIN JO AAPNE COPY KI THI:
+const SUPABASE_URL = 'https://pbinjwwowtbwubfzzhyb.supabase.co'; // Aapki URL
+const SUPABASE_ANON_KEY = 'sb_publishable_....'; // Aapki lambi wali Key
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Temporary Sites List
 let sites = [
-    { 
-        id: '1', 
-        name: 'Sultan Ul Faqr', 
-        url: 'https://sultanulfaqr.pk', 
-        apiKey: 'Sultan-Secret-786',
-        status: 'online'
-    }
+    { id: '1', name: 'Sultan Ul Faqr', url: 'https://sultanulfaqr.pk', apiKey: 'Sultan-Secret-786', status: 'online'}
 ];
 
-// 1. Get All Managed Sites
-app.get('/api/sites', (req, res) => {
-    res.json(sites);
+app.get('/api/sites', (req, res) => res.json(sites));
+
+// --- NAYA ROUTE: DATABASE SE BOT STATS LANA ---
+app.get('/api/bots/stats', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('bot_stats')
+            .select('*')
+            .order('id', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ message: "Database query failed", error: error.message });
+    }
 });
 
-// 2. Add New Site
-app.post('/api/sites', (req, res) => {
-    const newSite = { id: Date.now().toString(), ...req.body, status: 'online' };
-    sites.push(newSite);
-    res.json({ message: "Site added successfully", site: newSite });
-});
-
-// 3. Proxy: Scan Site (Backend WordPress ko hit karega)
+// Proxy routes for WordPress
 app.get('/api/proxy/scan/:siteId', async (req, res) => {
     const site = sites.find(s => s.id === req.params.siteId);
-    if (!site) return res.status(404).json({ message: "Site not found" });
-
     try {
         const response = await axios.get(`${site.url}/wp-json/aegissec/v1/scan?api_key=${site.apiKey}`);
         res.json(response.data);
-    } catch (error) {
-        res.status(500).json({ message: "WordPress connection failed", error: error.message });
-    }
+    } catch (error) { res.status(500).json({ message: "Failed" }); }
 });
 
-// 4. Proxy: Get Logs
 app.get('/api/proxy/logs/:siteId', async (req, res) => {
     const site = sites.find(s => s.id === req.params.siteId);
-    if (!site) return res.status(404).json({ message: "Site not found" });
-
     try {
         const response = await axios.get(`${site.url}/wp-json/aegissec/v1/logs?api_key=${site.apiKey}`);
         res.json(response.data);
-    } catch (error) {
-        res.status(500).json({ message: "Failed to fetch logs from site" });
-    }
+    } catch (error) { res.status(500).json({ message: "Failed" }); }
 });
 
-// Vercel Serverless Function ke liye export karna zaroori hai
 module.exports = app;
-
-// Local testing ke liye (Vercel isko ignore kar dega)
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
-        console.log(`AegisSec Cloud Brain is active on port ${PORT}`);
-    });
-}

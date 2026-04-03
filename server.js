@@ -10,7 +10,7 @@ app.use(express.json());
 // --- SUPABASE DATABASE CONNECTION ---
 // YAHAN APNI SUPABASE URL AUR KEY DAALEIN JO AAPNE COPY KI THI:
 const SUPABASE_URL = 'https://pbinjwwowtbwubfzzhyb.supabase.co'; // Aapki URL
-const SUPABASE_ANON_KEY = 'sb_publishable_....'; // Aapki lambi wali Key
+const SUPABASE_ANON_KEY = 'sb_publishable_VhijJJ8By0ixkxCDoeqymA_XUO-G9b8'; // Aapki lambi wali Key
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Temporary Sites List

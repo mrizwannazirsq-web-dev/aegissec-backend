@@ -1,4 +1,4 @@
-// --- AEGISSEC CENTRAL BRAIN (Node.js Backend) ---
+// --- AEGISSEC CENTRAL BRAIN (Node.js Backend for Vercel) ---
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -6,8 +6,6 @@ const axios = require('axios');
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-const PORT = process.env.PORT || 5000;
 
 // Temporary Database (Baad mein hum ise Supabase se jodeinge)
 let sites = [
@@ -58,6 +56,13 @@ app.get('/api/proxy/logs/:siteId', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`AegisSec Cloud Brain is active on port ${PORT}`);
-});
+// Vercel Serverless Function ke liye export karna zaroori hai
+module.exports = app;
+
+// Local testing ke liye (Vercel isko ignore kar dega)
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`AegisSec Cloud Brain is active on port ${PORT}`);
+    });
+}
